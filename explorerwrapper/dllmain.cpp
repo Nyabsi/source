@@ -346,8 +346,8 @@ HRESULT OnShellHookMessage_Hook(void* a1, unsigned __int64 id, HWND a3) //gets c
 	// key to note: at the moment, we can either do this for bugged start menu behaviour, or we can return S_OK and have no menu on the hotkey at all.
 	// neither is ideal, but we can probably ship m2 like this and fix properly later
 
-	if (CtaskBandPtr && id == 7)
-		return CTaskBand_HandleShellHook(CtaskBandPtr,7,a3);
+	if (CTaskBandPtr && id == 7)
+		return CTaskBand_HandleShellHook(CTaskBandPtr,7,a3);
 
 	return OnShellHookMessage(a1,id,a3);
 }
