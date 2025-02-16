@@ -339,16 +339,17 @@ UINT WINAPI RegisterWindowMessageWNEW(LPCWSTR lpString)
 // experimental hotkey fix 3 - buggy results but *does* appear to work
 HRESULT(__fastcall* CTaskBand_HandleShellHook)(PVOID ctaskband, int id, HWND a3);
 
-HRESULT(__fastcall* OnShellHookMessage)(void* a1);
-HRESULT OnShellHookMessage_Hook(void* a1) //gets called when start menu is to be opened - a bit temperamental
+
+HRESULT(__fastcall* OnShellHookMessage)(void* a1, unsigned __int64 id, HWND a3);
+HRESULT OnShellHookMessage_Hook(void* a1, unsigned __int64 id, HWND a3) //gets called when start menu is to be opened - a bit temperamental
 {
 	// key to note: at the moment, we can either do this for bugged start menu behaviour, or we can return S_OK and have no menu on the hotkey at all.
 	// neither is ideal, but we can probably ship m2 like this and fix properly later
 
-	if (CTaskBandPtr)
-		return CTaskBand_HandleShellHook(CTaskBandPtr,7,0);
+	if (CtaskBandPtr && id == 7)
+		return CTaskBand_HandleShellHook(CtaskBandPtr,7,a3);
 
-	return OnShellHookMessage(a1);
+	return OnShellHookMessage(a1,id,a3);
 }
 
 void HookShell32();
@@ -384,11 +385,11 @@ void HookAPIs() // largely a legacy function now
 	//fRegisterWindowMessageW = (decltype(fRegisterWindowMessageW))GetProcAddress(LoadLibraryW(L"user32.dll"),"RegisterWindowMessageW");
 
 	// disabled - <1607 doesnt like atm + unfinished. sorry! uncomment if you're testing
-	//CTaskBand_HandleShellHook = (decltype(CTaskBand_HandleShellHook))FindPattern((uintptr_t)GetModuleHandle(0), "48 89 5C 24 08 55 56 57 41 54 41 55 48 83 EC ?? 83 FA 07");
-	//OnShellHookMessage = (decltype(OnShellHookMessage))FindPattern((uintptr_t)LoadLibraryW(L"twinui.pcshell.dll"), "40 53 48 83 EC 20 48 8B D9 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 48 8B 40 ?? FF 15 ?? ?? ?? ?? 84 C0 0F 85 ?? ?? ?? ?? 38 83");
+	CTaskBand_HandleShellHook = (decltype(CTaskBand_HandleShellHook))FindPattern((uintptr_t)GetModuleHandle(0), "48 89 5C 24 08 55 56 57 41 54 41 55 48 83 EC ?? 83 FA 07");
+	OnShellHookMessage = (decltype(OnShellHookMessage))FindPattern((uintptr_t)LoadLibraryW(L"twinui.pcshell.dll"), "40 53 48 83 EC 20 48 8B D9 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 48 8B 40 ?? FF 15 ?? ?? ?? ?? 84 C0 0F 85 ?? ?? ?? ?? 38 83");
 
 	// disabled - <1607 doesnt like atm + unfinished. sorry! uncomment if you're testing
-	//MH_CreateHook(static_cast<LPVOID>(OnShellHookMessage), OnShellHookMessage_Hook, reinterpret_cast<LPVOID*>(&OnShellHookMessage));
+	MH_CreateHook(static_cast<LPVOID>(OnShellHookMessage), OnShellHookMessage_Hook, reinterpret_cast<LPVOID*>(&OnShellHookMessage));
 
 	// Prevent theme overrides applying to file explorer *VERY IMPORTANT*
 	HookTrayThread();
